@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "strictNullChecks": true,
+    "sourceMap": true,
+    "lib": ["es2015", "webworker"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "**/__tests__/*"]
+}
