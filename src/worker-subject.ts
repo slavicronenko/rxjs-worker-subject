@@ -5,7 +5,6 @@ export class WorkerSubject<Input, Output> extends Subject<Output> {
     super();
 
     worker.onmessage = event => super.next(isRawResponse ? event : event.data);
-    worker.onmessageerror = error => this.error(error);
     worker.onerror = error => this.error(error);
   }
 
