@@ -1,6 +1,6 @@
 {
   "name": "rxjs-worker-subject",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "An extension of the RxJS Subject, a wrapper, which allows to work with Web Workers using RxJS syntax",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,9 +8,9 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "npm test",
-    "prepublish": "npm test",
+    "prepack": "npm test && npm run lint && npm run build",
     "build": "tsc",
+    "lint": "eslint src",
     "test": "jest --config jest.config.json"
   },
   "repository": {
@@ -33,13 +33,14 @@
   },
   "homepage": "https://github.com/slavicronenko/rxjs-worker-subject#readme",
   "dependencies": {
-    "rxjs": "~6.5.4"
+    "rxjs": "~7.8.0"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.10",
-    "jest": "^26.2.2",
-    "ts-jest": "^26.2.0",
-    "tslint": "~6.1.0",
-    "typescript": "~3.8.3"
+    "@types/jest": "^29.5.0",
+    "eslint": "^9.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "~5.5.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

@@ -1,3 +1,7 @@
 src
+.github
 tsconfig.json
-jestconfig.json
+tsconfig.test.json
+jest.config.json
+eslint.config.mjs
+coverage

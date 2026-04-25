@@ -3,15 +3,14 @@ import { WorkerSubject } from '../index';
 import { Subject } from 'rxjs';
 
 describe('WorkerSubject', () => {
-  let worker;
-  let event;
+  let worker: MockedWorker;
 
   describe('inheritance hierarchy', () => {
-    it('should be an instance of the MockedWorker', () => {
+    it('should be an instance of WorkerSubject', () => {
       expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(WorkerSubject);
     });
 
-    it('should be an extension of the Subject', () => {
+    it('should be an extension of Subject', () => {
       expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(Subject);
     });
   });
@@ -32,39 +31,54 @@ describe('WorkerSubject', () => {
   });
 
   describe('#onmessage', () => {
+    let nextSpy: jest.SpyInstance;
+
     beforeEach(() => {
-      event = { data: 'test data' };
       worker = new MockedWorker();
-
-      spyOn( Subject.prototype, 'next' );
+      nextSpy = jest.spyOn(Subject.prototype, 'next');
     });
 
-    it('should call "next" on parent class with "event.data" by default or if isRawResponse is set to false', () => {
+    afterEach(() => {
+      nextSpy.mockRestore();
+    });
+
+    it('should emit event.data by default', () => {
       new WorkerSubject(worker);
-      worker.onmessage(event);
-
-      expect(Subject.prototype.next).toBeCalledWith('test data');
+      worker.onmessage!({ data: 'test data' } as MessageEvent);
+      expect(nextSpy).toBeCalledWith('test data');
     });
 
-    it('should call "next" on the parent class with whole event object if isRawResponse is set to true', () => {
-      new WorkerSubject(worker, true);
-      worker.onmessage(event);
-
-      expect(Subject.prototype.next).toBeCalledWith(event);
+    it('should emit the raw event when rawResponse is true', () => {
+      new WorkerSubject(worker, { rawResponse: true });
+      const event = { data: 'test data' } as MessageEvent;
+      worker.onmessage!(event);
+      expect(nextSpy).toBeCalledWith(event);
     });
   });
 
   describe('#onerror', () => {
-    it('should call "error" method with the same parameter if worker is throwing error', () => {
-      const error = new Error();
+    let errorSpy: jest.SpyInstance;
 
-      spyOn( Subject.prototype, 'error' );
+    beforeEach(() => {
       worker = new MockedWorker();
+      errorSpy = jest.spyOn(Subject.prototype, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      errorSpy.mockRestore();
+    });
+
+    it('should call "error" with the error event', () => {
       new WorkerSubject(worker);
+      const error = new ErrorEvent('error');
+      worker.onerror!(error);
+      expect(errorSpy).toBeCalledWith(error);
+    });
 
-      worker.onerror(error);
-
-      expect(Subject.prototype.error).toBeCalledWith(error);
+    it('should terminate the worker on error', () => {
+      new WorkerSubject(worker);
+      worker.onerror!(new ErrorEvent('error'));
+      expect(worker.terminate).toHaveBeenCalled();
     });
   });
 
@@ -72,31 +86,65 @@ describe('WorkerSubject', () => {
     it('should post a message to the worker', () => {
       worker = new MockedWorker();
       const workerSubj = new WorkerSubject(worker);
-
       workerSubj.next('test data');
-
       expect(worker.postMessage).toBeCalledWith('test data');
     });
   });
 
   describe('#complete', () => {
     it('should call "complete" on the parent class', () => {
+      const completeSpy = jest.spyOn(Subject.prototype, 'complete');
       const workerSubj = new WorkerSubject(new MockedWorker());
-
-      spyOn( Subject.prototype, 'complete' );
-
       workerSubj.complete();
-
-      expect(Subject.prototype.complete).toBeCalledWith();
+      expect(completeSpy).toHaveBeenCalled();
+      completeSpy.mockRestore();
     });
 
-    it('should call "terminate" the worker if terminate parameter is set tu true', () => {
+    it('should terminate the worker when terminate is true', () => {
       worker = new MockedWorker();
       const workerSubj = new WorkerSubject(worker);
-
       workerSubj.complete(true);
+      expect(worker.terminate).toHaveBeenCalled();
+    });
 
-      expect(worker.terminate).toBeCalledWith();
+    it('should clear onmessage and onerror handlers', () => {
+      worker = new MockedWorker();
+      const workerSubj = new WorkerSubject(worker);
+      workerSubj.complete();
+      expect(worker.onmessage).toBeNull();
+      expect(worker.onerror).toBeNull();
+    });
+  });
+
+  describe('multiple subscribers', () => {
+    it('should deliver messages to all active subscribers', () => {
+      worker = new MockedWorker();
+      const workerSubj = new WorkerSubject<string, string>(worker);
+      const results1: string[] = [];
+      const results2: string[] = [];
+
+      workerSubj.subscribe(v => results1.push(v));
+      workerSubj.subscribe(v => results2.push(v));
+
+      worker.onmessage!({ data: 'hello' } as MessageEvent);
+
+      expect(results1).toEqual(['hello']);
+      expect(results2).toEqual(['hello']);
+    });
+  });
+
+  describe('subscription cleanup', () => {
+    it('should stop delivering messages after unsubscribe', () => {
+      worker = new MockedWorker();
+      const workerSubj = new WorkerSubject<string, string>(worker);
+      const results: string[] = [];
+
+      const sub = workerSubj.subscribe(v => results.push(v));
+      worker.onmessage!({ data: 'before' } as MessageEvent);
+      sub.unsubscribe();
+      worker.onmessage!({ data: 'after' } as MessageEvent);
+
+      expect(results).toEqual(['before']);
     });
   });
 });
