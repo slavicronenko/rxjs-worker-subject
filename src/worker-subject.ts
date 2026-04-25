@@ -19,6 +19,8 @@ export class WorkerSubject<Input, Output> extends Subject<Output> {
     };
   }
 
+  // @ts-expect-error -- TS2416: intentionally overrides Subject<Output>.next with a
+  // distinct Input type since messages sent to the worker differ from emitted Output.
   public next(input: Input): void {
     this.worker.postMessage(input);
   }
