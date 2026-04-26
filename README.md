@@ -14,6 +14,36 @@ Three classes cover the full range of use cases — from read-only observation t
 npm install rxjs-worker-subject
 ```
 
+## Example
+
+**`worker.ts`**
+```typescript
+self.onmessage = (event: MessageEvent<number>) => {
+  self.postMessage(event.data * 2);
+};
+```
+
+**`main.ts`**
+```typescript
+import { filter, map } from 'rxjs';
+import { WorkerSubject } from 'rxjs-worker-subject';
+
+const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+const subject = new WorkerSubject<number, number>(worker);
+
+subject
+  .pipe(
+    filter((n) => n > 10),
+    map((n) => `Result: ${n}`)
+  )
+  .subscribe((result) => console.log(result)); // "Result: 84"
+
+subject.next(42);
+subject.complete(true); // clears handlers and terminates the worker
+```
+
+---
+
 ## Classes
 
 ### `WorkerSubject<Input, Output>` — full duplex
@@ -23,13 +53,12 @@ Send messages to the worker and subscribe to its responses through a single hand
 ```typescript
 import { WorkerSubject } from 'rxjs-worker-subject';
 
-const worker = new Worker('./worker', { type: 'module' });
+const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 const subject = new WorkerSubject<Command, Result>(worker);
 
-subject.subscribe(result => console.log(result));
+subject.subscribe((result) => console.log(result));
 subject.next({ type: 'ping' });
 
-// clean up when done
 subject.complete(true); // true = terminate the worker
 ```
 
@@ -43,7 +72,7 @@ Subscribe to worker output without caring about the input side.
 import { WorkerObservable } from 'rxjs-worker-subject';
 
 const obs = new WorkerObservable<Result>(worker);
-obs.pipe(filter(r => r.type === 'pong')).subscribe(console.log);
+obs.pipe(filter((r) => r.type === 'pong')).subscribe(console.log);
 ```
 
 ---
