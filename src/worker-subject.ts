@@ -19,10 +19,11 @@ export class WorkerSubject<Input, Output> extends WorkerObservable<Output> imple
     this.observer.next(input);
   }
 
-  error(_err: unknown): void {
+  error(err: unknown): void {
     this.worker.onmessage = null;
     this.worker.onerror = null;
     this.isCompleted = true;
     this.worker.terminate();
+    this.subject.error(err);
   }
 }

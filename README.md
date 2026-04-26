@@ -128,7 +128,7 @@ Implements `Observer<T>`.
 | `constructor(worker)` | Wraps worker input. |
 | `next(input: T)` | Sends a message to the worker via `postMessage`. No-op after `complete()` or `error()`. |
 | `error(err)` | Terminates the worker. Called automatically by RxJS when an upstream observable errors (e.g. `source$.subscribe(observer)`). |
-| `complete(terminate?: boolean)` | Stops accepting messages. Terminates the worker if `terminate` is `true`. |
+| `complete(terminate?: boolean)` | Stops accepting messages. Terminates the worker if `terminate` is `true`. Defaults to `false` — when used via `source$.subscribe(observer)`, RxJS calls `complete()` with no arguments, leaving the worker running. Call `complete(true)` explicitly to terminate. |
 
 > **Note:** a `Worker` instance can only be wrapped by one `WorkerObservable` (or `WorkerSubject`) at a time. Wrapping the same worker in a second instance will silently replace the `onmessage`/`onerror` handlers and break the first.
 

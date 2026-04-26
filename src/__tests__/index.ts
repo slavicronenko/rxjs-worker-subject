@@ -61,6 +61,19 @@ describe('WorkerSubject', () => {
     it('should not throw', () => {
       expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).not.toThrow();
     });
+
+    it('should propagate the error to subscribers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+      let receivedError: unknown;
+
+      subj.subscribe({ error: (err) => { receivedError = err; } });
+      const error = new Error('upstream error');
+
+      subj.error(error);
+
+      expect(receivedError).toBe(error);
+    });
   });
 
   describe('#next', () => {
@@ -92,6 +105,17 @@ describe('WorkerSubject', () => {
 
       expect(worker.postMessage).not.toHaveBeenCalled();
     });
+
+    it('should not post a message after worker.onerror fires', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.subscribe({ error: () => {} });
+      worker.onerror!(new ErrorEvent('error'));
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
   });
 
   describe('#complete', () => {
@@ -112,6 +136,21 @@ describe('WorkerSubject', () => {
       subj.complete(true);
 
       expect(worker.terminate).toHaveBeenCalled();
+    });
+  });
+
+  describe('#onerror', () => {
+    it('should propagate worker error to subscribers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+      let receivedError: unknown;
+
+      subj.subscribe({ error: (err) => { receivedError = err; } });
+      const error = new ErrorEvent('error');
+
+      worker.onerror!(error);
+
+      expect(receivedError).toBe(error);
     });
   });
 

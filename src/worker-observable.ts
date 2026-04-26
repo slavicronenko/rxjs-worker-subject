@@ -7,7 +7,7 @@ export interface WorkerObservableOptions {
 export class WorkerObservable<T> extends Observable<T> {
   protected readonly worker: Worker;
   protected isCompleted = false;
-  private subject = new Subject<T>();
+  protected subject = new Subject<T>();
 
   constructor(worker: Worker, options: WorkerObservableOptions = {}) {
     super((subscriber) => this.subject.subscribe(subscriber));
@@ -19,6 +19,7 @@ export class WorkerObservable<T> extends Observable<T> {
     worker.onerror = (error) => {
       worker.onmessage = null;
       worker.onerror = null;
+      this.isCompleted = true;
       worker.terminate();
       this.subject.error(error);
     };
