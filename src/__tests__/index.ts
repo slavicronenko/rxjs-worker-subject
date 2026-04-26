@@ -39,8 +39,27 @@ describe('WorkerSubject', () => {
   });
 
   describe('#error', () => {
-    it('should throw', () => {
-      expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).toThrow();
+    it('should terminate the worker', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+
+      subj.error(new Error());
+
+      expect(worker.terminate).toHaveBeenCalled();
+    });
+
+    it('should clear onmessage and onerror handlers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+
+      subj.error(new Error());
+
+      expect(worker.onmessage).toBeNull();
+      expect(worker.onerror).toBeNull();
+    });
+
+    it('should not throw', () => {
+      expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).not.toThrow();
     });
   });
 
@@ -52,6 +71,26 @@ describe('WorkerSubject', () => {
       subj.next('hello');
 
       expect(worker.postMessage).toHaveBeenCalledWith('hello');
+    });
+
+    it('should not post a message after complete', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.complete();
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not post a message after error', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.error(new Error());
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
     });
   });
 

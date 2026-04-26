@@ -25,11 +25,31 @@ describe('WorkerObserver', () => {
 
       expect(worker.postMessage).toHaveBeenCalledWith('hello');
     });
+
+    it('should not post a message after complete', () => {
+      observer.complete();
+      observer.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not post a message after error', () => {
+      observer.error(new Error());
+      observer.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
   });
 
   describe('#error', () => {
-    it('should throw', () => {
-      expect(() => observer.error(new Error())).toThrow();
+    it('should terminate the worker', () => {
+      observer.error(new Error());
+
+      expect(worker.terminate).toHaveBeenCalled();
+    });
+
+    it('should not throw', () => {
+      expect(() => observer.error(new Error())).not.toThrow();
     });
   });
 

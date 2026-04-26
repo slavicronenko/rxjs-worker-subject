@@ -88,6 +88,17 @@ describe('WorkerObservable', () => {
 
       expect(worker.terminate).toHaveBeenCalled();
     });
+
+    it('should clear onmessage and onerror handlers on error', () => {
+      worker = new MockedWorker();
+      const obs = new WorkerObservable(worker);
+
+      obs.subscribe({ error: () => {} });
+      worker.onerror!(new ErrorEvent('error'));
+
+      expect(worker.onmessage).toBeNull();
+      expect(worker.onerror).toBeNull();
+    });
   });
 
   describe('#complete', () => {

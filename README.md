@@ -39,6 +39,7 @@ subject
   .subscribe((result) => console.log(result)); // "Result: 84"
 
 subject.next(42);
+// call complete(true) after receiving the final response, or in a teardown hook
 subject.complete(true); // clears handlers and terminates the worker
 ```
 
@@ -125,7 +126,11 @@ Implements `Observer<T>`.
 | Member | Description |
 |--------|-------------|
 | `constructor(worker)` | Wraps worker input. |
-| `next(input: T)` | Sends a message to the worker via `postMessage`. |
+| `next(input: T)` | Sends a message to the worker via `postMessage`. No-op after `complete()` or `error()`. |
+| `error(err)` | Terminates the worker. Called automatically by RxJS when an upstream observable errors (e.g. `source$.subscribe(observer)`). |
+| `complete(terminate?: boolean)` | Stops accepting messages. Terminates the worker if `terminate` is `true`. |
+
+> **Note:** a `Worker` instance can only be wrapped by one `WorkerObservable` (or `WorkerSubject`) at a time. Wrapping the same worker in a second instance will silently replace the `onmessage`/`onerror` handlers and break the first.
 
 ## Contributing
 
