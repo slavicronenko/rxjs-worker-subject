@@ -1,37 +1,18 @@
-import { Subject } from 'rxjs';
+import { Observer } from 'rxjs';
+import { WorkerObservable, WorkerSubjectOptions } from './worker-observable';
+import { WorkerObserver } from './worker-observer';
 
-export interface WorkerSubjectOptions {
-  rawResponse?: boolean;
-}
-
-export class WorkerSubject<Input, Output> extends Subject<Output> {
-  protected worker: Worker;
+export class WorkerSubject<Input, Output> extends WorkerObservable<Output> implements Observer<Input> {
+  private readonly observer: WorkerObserver<Input>;
 
   constructor(worker: Worker, options: WorkerSubjectOptions = {}) {
-    super();
-    this.worker = worker;
-    const { rawResponse = false } = options;
-
-    worker.onmessage = event => super.next(rawResponse ? event : event.data);
-    worker.onerror = error => {
-      worker.terminate();
-      this.error(error);
-    };
+    super(worker, options);
+    this.observer = new WorkerObserver<Input>(worker);
   }
 
-  // @ts-expect-error -- TS2416: intentionally overrides Subject<Output>.next with a
-  // distinct Input type since messages sent to the worker differ from emitted Output.
-  public next(input: Input): void {
-    this.worker.postMessage(input);
+  next(input: Input): void {
+    this.observer.next(input);
   }
 
-  public complete(terminate = false): void {
-    this.worker.onmessage = null;
-    this.worker.onerror = null;
-    super.complete();
-
-    if (terminate) {
-      this.worker.terminate();
-    }
-  }
+  error(_err: unknown): void {}
 }

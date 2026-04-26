@@ -1,8 +1,6 @@
 # rxjs-worker-subject
 
-`rxjs-worker-subject` is an extension of the [RxJS Subject](https://rxjs.dev/guide/subject),
-a wrapper, which allows to work with [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
-using RxJS syntax.
+RxJS wrappers for [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). Three classes cover the full range of use cases — from read-only observation to full duplex messaging.
 
 ## Installation
 
@@ -10,64 +8,93 @@ using RxJS syntax.
 npm install rxjs-worker-subject
 ```
 
-## Usage
+## Classes
 
-worker.ts
-```typescript
-addEventListener('message', ({ data }) => postMessage(data));
-```
+### `WorkerSubject<Input, Output>` — full duplex
 
-index.ts
+Send messages to the worker and subscribe to its responses through a single handle.
+
 ```typescript
 import { WorkerSubject } from 'rxjs-worker-subject';
 
-const workerSubj = new WorkerSubject<string, string>(new Worker('./worker', { type: 'module' }));
+const worker = new Worker('./worker', { type: 'module' });
+const subject = new WorkerSubject<Command, Result>(worker);
 
-workerSubj.subscribe(response => {
-  console.log(response);
-});
+subject.subscribe(result => console.log(result));
+subject.next({ type: 'ping' });
 
-workerSubj.next('ping');
-
-// Unsubscribe and clean up when done
-workerSubj.complete(true);
+// clean up when done
+subject.complete(true); // true = terminate the worker
 ```
+
+---
+
+### `WorkerObservable<T>` — read only
+
+Subscribe to worker output without caring about the input side.
+
+```typescript
+import { WorkerObservable } from 'rxjs-worker-subject';
+
+const obs = new WorkerObservable<Result>(worker);
+obs.pipe(filter(r => r.type === 'pong')).subscribe(console.log);
+```
+
+---
+
+### `WorkerObserver<T>` — write only
+
+Send messages to a worker. Implements the RxJS `Observer` interface, so it can be passed directly to `observable.subscribe()`.
+
+```typescript
+import { WorkerObserver } from 'rxjs-worker-subject';
+
+const observer = new WorkerObserver<Command>(worker);
+observer.next({ type: 'ping' });
+
+// pipe an observable into a worker
+commands$.subscribe(observer);
+```
+
+---
 
 ## API
 
-### `new WorkerSubject<Input, Output>(worker, options?)`
+### `WorkerSubject<Input, Output>`
 
-Creates a new `WorkerSubject` that wraps the given `Worker`.
+Extends `WorkerObservable<Output>` and implements `Observer<Input>`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `worker` | `Worker` | The Web Worker instance to wrap. |
-| `options.rawResponse` | `boolean` | When `true`, subscribers receive the raw `MessageEvent` instead of `event.data`. Defaults to `false`. |
+| Member | Description |
+|--------|-------------|
+| `constructor(worker, options?)` | Wraps the given `Worker`. |
+| `next(input: Input)` | Sends a message to the worker via `postMessage`. |
+| `complete(terminate?: boolean)` | Completes the observable and clears event handlers. Terminates the worker if `terminate` is `true`. |
+| `subscribe(...)` | Standard RxJS `Observable` subscription. |
 
-### `.next(value: Input): void`
+### `WorkerObservable<T>`
 
-Posts a message to the worker via `postMessage`.
+Extends `Observable<T>`.
 
-### `.complete(terminate?: boolean): void`
+| Member | Description |
+|--------|-------------|
+| `constructor(worker, options?)` | Wraps worker output as a multicasted observable. |
+| `complete(terminate?: boolean)` | Completes all subscriptions and clears event handlers. |
+| `options.rawResponse` | When `true`, emits the raw `MessageEvent` instead of `event.data`. Defaults to `false`. |
 
-Completes the subject and clears worker event handlers. When `terminate` is `true`, also calls `worker.terminate()`. Defaults to `false`.
+On worker error, the observable propagates the error to subscribers and terminates the worker automatically.
 
-### Error handling
+### `WorkerObserver<T>`
 
-If the worker emits an error, the subject propagates it to all subscribers and terminates the worker automatically.
+Implements `Observer<T>`.
 
-```typescript
-workerSubj.subscribe({
-  next: response => console.log(response),
-  error: err => console.error('Worker error:', err),
-});
-```
+| Member | Description |
+|--------|-------------|
+| `constructor(worker)` | Wraps worker input. |
+| `next(input: T)` | Sends a message to the worker via `postMessage`. |
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
+Pull requests are welcome. For major changes, please open an issue first.
 
 ## License
 
