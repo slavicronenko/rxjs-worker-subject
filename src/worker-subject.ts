@@ -15,5 +15,7 @@ export class WorkerSubject<Input, Output> extends WorkerObservable<Output> imple
     this.observer.next(input);
   }
 
-  error(_err: unknown): void {}
+  error(_err: unknown): void {
+    throw new Error('WorkerSubject does not support error()');
+  }
 }

@@ -7,7 +7,13 @@ export class WorkerObserver<T> implements Observer<T> {
     this.worker.postMessage(input);
   }
 
-  error(_err: unknown): void {}
+  error(_err: unknown): void {
+    throw new Error('WorkerObserver does not support error()');
+  }
 
-  complete(): void {}
+  complete(terminate = false): void {
+    if (terminate) {
+      this.worker.terminate();
+    }
+  }
 }

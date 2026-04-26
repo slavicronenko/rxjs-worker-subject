@@ -39,8 +39,8 @@ describe('WorkerSubject', () => {
   });
 
   describe('#error', () => {
-    it('should not throw', () => {
-      expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).not.toThrow();
+    it('should throw', () => {
+      expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).toThrow();
     });
   });
 

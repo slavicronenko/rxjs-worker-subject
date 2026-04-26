@@ -14,6 +14,7 @@ describe('WorkerObserver', () => {
   describe('interface', () => {
     it('should implement the Observer interface', () => {
       const typed: Observer<string> = observer;
+
       expect(typed).toBeDefined();
     });
   });
@@ -21,19 +22,28 @@ describe('WorkerObserver', () => {
   describe('#next', () => {
     it('should post a message to the worker', () => {
       observer.next('hello');
+
       expect(worker.postMessage).toHaveBeenCalledWith('hello');
     });
   });
 
   describe('#error', () => {
-    it('should not throw', () => {
-      expect(() => observer.error(new Error())).not.toThrow();
+    it('should throw', () => {
+      expect(() => observer.error(new Error())).toThrow();
     });
   });
 
   describe('#complete', () => {
-    it('should not throw', () => {
-      expect(() => observer.complete()).not.toThrow();
+    it('should not terminate the worker by default', () => {
+      observer.complete();
+
+      expect(worker.terminate).not.toHaveBeenCalled();
+    });
+
+    it('should terminate the worker when terminate is true', () => {
+      observer.complete(true);
+
+      expect(worker.terminate).toHaveBeenCalled();
     });
   });
 });
