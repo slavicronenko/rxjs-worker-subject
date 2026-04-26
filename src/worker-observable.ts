@@ -10,9 +10,10 @@ export class WorkerObservable<T> extends Observable<T> {
 
   constructor(worker: Worker, options: WorkerSubjectOptions = {}) {
     super((subscriber) => this.subject.subscribe(subscriber));
-    this.worker = worker;
+
     const { rawResponse = false } = options;
 
+    this.worker = worker;
     worker.onmessage = (event) => this.subject.next(rawResponse ? event : event.data);
     worker.onerror = (error) => {
       worker.terminate();

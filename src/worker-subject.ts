@@ -7,6 +7,7 @@ export class WorkerSubject<Input, Output> extends WorkerObservable<Output> imple
 
   constructor(worker: Worker, options: WorkerSubjectOptions = {}) {
     super(worker, options);
+
     this.observer = new WorkerObserver<Input>(worker);
   }
 
