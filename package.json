@@ -1,12 +1,22 @@
 {
   "name": "rxjs-worker-subject",
   "version": "2.0.0",
-  "description": "An extension of the RxJS Subject, a wrapper, which allows to work with Web Workers using RxJS syntax",
+  "description": "Reactive Web Worker communication using RxJS — subscribe to worker output as an Observable, send input as an Observer.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "prepack": "npm test && npm run lint && npm run build",
     "build": "tsc",
@@ -19,12 +29,17 @@
   },
   "keywords": [
     "rxjs",
-    "web",
     "worker",
     "webworker",
-    "wrapper",
+    "observable",
+    "observer",
     "subject",
-    "observable"
+    "reactive",
+    "reactive-programming",
+    "typescript",
+    "postmessage",
+    "stream",
+    "messaging"
   ],
   "author": "Viacheslav Ronenko <slavic.ronenko@gmail.com>",
   "license": "MIT",
@@ -32,14 +47,15 @@
     "url": "https://github.com/slavicronenko/rxjs-worker-subject/issues"
   },
   "homepage": "https://github.com/slavicronenko/rxjs-worker-subject#readme",
-  "dependencies": {
-    "rxjs": "~7.8.0"
+  "peerDependencies": {
+    "rxjs": ">=7.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "eslint": "^9.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "rxjs": "~7.8.0",
     "ts-jest": "^29.2.0",
     "typescript": "~5.5.0",
     "typescript-eslint": "^8.0.0"

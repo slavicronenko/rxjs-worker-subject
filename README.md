@@ -1,6 +1,12 @@
 # rxjs-worker-subject
 
-RxJS wrappers for [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). Three classes cover the full range of use cases — from read-only observation to full duplex messaging.
+[![npm](https://img.shields.io/npm/v/rxjs-worker-subject)](https://www.npmjs.com/package/rxjs-worker-subject)
+[![CI](https://github.com/slavicronenko/rxjs-worker-subject/actions/workflows/ci.yml/badge.svg)](https://github.com/slavicronenko/rxjs-worker-subject/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/rxjs-worker-subject)](./LICENSE)
+
+Reactive [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) communication using RxJS. Subscribe to worker output as an `Observable`, send input as an `Observer` — or do both at once with `WorkerSubject`.
+
+Three classes cover the full range of use cases — from read-only observation to full-duplex messaging.
 
 ## Installation
 
