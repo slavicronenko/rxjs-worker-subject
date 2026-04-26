@@ -32,7 +32,7 @@ describe('WorkerObservable', () => {
       const obs = new WorkerObservable<string>(worker);
       const results: string[] = [];
 
-      obs.subscribe(v => results.push(v));
+      obs.subscribe((v) => results.push(v));
       worker.onmessage!({ data: 'hello' } as MessageEvent);
 
       expect(results).toEqual(['hello']);
@@ -44,7 +44,7 @@ describe('WorkerObservable', () => {
       const results: MessageEvent[] = [];
       const event = { data: 'hello' } as MessageEvent;
 
-      obs.subscribe(v => results.push(v));
+      obs.subscribe((v) => results.push(v));
       worker.onmessage!(event);
 
       expect(results).toEqual([event]);
@@ -56,8 +56,8 @@ describe('WorkerObservable', () => {
       const results1: string[] = [];
       const results2: string[] = [];
 
-      obs.subscribe(v => results1.push(v));
-      obs.subscribe(v => results2.push(v));
+      obs.subscribe((v) => results1.push(v));
+      obs.subscribe((v) => results2.push(v));
       worker.onmessage!({ data: 'hello' } as MessageEvent);
 
       expect(results1).toEqual(['hello']);
@@ -71,8 +71,9 @@ describe('WorkerObservable', () => {
       const obs = new WorkerObservable(worker);
       let receivedError: unknown;
 
-      obs.subscribe({ error: err => { receivedError = err; } });
+      obs.subscribe({ error: (err) => { receivedError = err; } });
       const error = new ErrorEvent('error');
+
       worker.onerror!(error);
 
       expect(receivedError).toBe(error);
@@ -81,8 +82,8 @@ describe('WorkerObservable', () => {
     it('should terminate the worker on error', () => {
       worker = new MockedWorker();
       const obs = new WorkerObservable(worker);
-      obs.subscribe({ error: () => {} });
 
+      obs.subscribe({ error: () => {} });
       worker.onerror!(new ErrorEvent('error'));
 
       expect(worker.terminate).toHaveBeenCalled();
@@ -93,6 +94,7 @@ describe('WorkerObservable', () => {
     it('should clear onmessage and onerror handlers', () => {
       worker = new MockedWorker();
       const obs = new WorkerObservable(worker);
+
       obs.complete();
 
       expect(worker.onmessage).toBeNull();
@@ -113,6 +115,7 @@ describe('WorkerObservable', () => {
     it('should terminate the worker when terminate is true', () => {
       worker = new MockedWorker();
       const obs = new WorkerObservable(worker);
+
       obs.complete(true);
 
       expect(worker.terminate).toHaveBeenCalled();
@@ -125,7 +128,8 @@ describe('WorkerObservable', () => {
       const obs = new WorkerObservable<string>(worker);
       const results: string[] = [];
 
-      const sub = obs.subscribe(v => results.push(v));
+      const sub = obs.subscribe((v) => results.push(v));
+
       worker.onmessage!({ data: 'before' } as MessageEvent);
       sub.unsubscribe();
       worker.onmessage!({ data: 'after' } as MessageEvent);

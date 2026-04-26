@@ -18,6 +18,7 @@ describe('WorkerSubject', () => {
   describe('interface', () => {
     it('should implement the Observer interface', () => {
       const typed: Observer<string> = new WorkerSubject<string, string>(new MockedWorker());
+
       expect(typed).toBeDefined();
     });
   });
@@ -47,7 +48,9 @@ describe('WorkerSubject', () => {
     it('should post a message to the worker', () => {
       worker = new MockedWorker();
       const subj = new WorkerSubject<string, string>(worker);
+
       subj.next('hello');
+
       expect(worker.postMessage).toHaveBeenCalledWith('hello');
     });
   });
@@ -56,7 +59,9 @@ describe('WorkerSubject', () => {
     it('should clear onmessage and onerror handlers', () => {
       worker = new MockedWorker();
       const subj = new WorkerSubject(worker);
+
       subj.complete();
+
       expect(worker.onmessage).toBeNull();
       expect(worker.onerror).toBeNull();
     });
@@ -64,7 +69,9 @@ describe('WorkerSubject', () => {
     it('should terminate the worker when terminate is true', () => {
       worker = new MockedWorker();
       const subj = new WorkerSubject(worker);
+
       subj.complete(true);
+
       expect(worker.terminate).toHaveBeenCalled();
     });
   });
@@ -76,8 +83,8 @@ describe('WorkerSubject', () => {
       const results1: string[] = [];
       const results2: string[] = [];
 
-      subj.subscribe(v => results1.push(v));
-      subj.subscribe(v => results2.push(v));
+      subj.subscribe((v) => results1.push(v));
+      subj.subscribe((v) => results2.push(v));
       worker.onmessage!({ data: 'hello' } as MessageEvent);
 
       expect(results1).toEqual(['hello']);
@@ -91,7 +98,8 @@ describe('WorkerSubject', () => {
       const subj = new WorkerSubject<string, string>(worker);
       const results: string[] = [];
 
-      const sub = subj.subscribe(v => results.push(v));
+      const sub = subj.subscribe((v) => results.push(v));
+
       worker.onmessage!({ data: 'before' } as MessageEvent);
       sub.unsubscribe();
       worker.onmessage!({ data: 'after' } as MessageEvent);

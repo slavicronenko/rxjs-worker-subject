@@ -9,12 +9,12 @@ export class WorkerObservable<T> extends Observable<T> {
   private subject = new Subject<T>();
 
   constructor(worker: Worker, options: WorkerSubjectOptions = {}) {
-    super(subscriber => this.subject.subscribe(subscriber));
+    super((subscriber) => this.subject.subscribe(subscriber));
     this.worker = worker;
     const { rawResponse = false } = options;
 
-    worker.onmessage = event => this.subject.next(rawResponse ? event : event.data);
-    worker.onerror = error => {
+    worker.onmessage = (event) => this.subject.next(rawResponse ? event : event.data);
+    worker.onerror = (error) => {
       worker.terminate();
       this.subject.error(error);
     };
@@ -24,6 +24,9 @@ export class WorkerObservable<T> extends Observable<T> {
     this.worker.onmessage = null;
     this.worker.onerror = null;
     this.subject.complete();
-    if (terminate) this.worker.terminate();
+
+    if (terminate) {
+      this.worker.terminate();
+    }
   }
 }
