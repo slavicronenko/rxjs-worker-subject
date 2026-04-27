@@ -1,22 +1,29 @@
-import { Subject } from 'rxjs';
+import { Observer } from 'rxjs';
+import { WorkerObservable, WorkerObservableOptions } from './worker-observable.js';
+import { WorkerObserver } from './worker-observer.js';
 
-export class WorkerSubject<Input, Output> extends Subject<Output> {
-  constructor(public worker: Worker, isRawResponse = false) {
-    super();
+export class WorkerSubject<Input, Output> extends WorkerObservable<Output> implements Observer<Input> {
+  private readonly observer: WorkerObserver<Input>;
 
-    worker.onmessage = event => super.next(isRawResponse ? event : event.data);
-    worker.onerror = error => this.error(error);
+  constructor(worker: Worker, options: WorkerObservableOptions = {}) {
+    super(worker, options);
+
+    this.observer = new WorkerObserver<Input>(worker);
   }
 
-  public next<Input>(input: Input): void {
-    this.worker.postMessage(input);
-  }
-
-  public complete(terminate = false): void {
-    super.complete();
-
-    if (terminate) {
-      this.worker.terminate();
+  next(input: Input): void {
+    if (this.isCompleted) {
+      return;
     }
+
+    this.observer.next(input);
+  }
+
+  error(err: unknown): void {
+    this.worker.onmessage = null;
+    this.worker.onerror = null;
+    this.isCompleted = true;
+    this.worker.terminate();
+    this.subject.error(err);
   }
 }

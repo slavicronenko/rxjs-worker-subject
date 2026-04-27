@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
-    "target": "es2015",
+    "outDir": "dist/esm",
+    "target": "es2020",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "declaration": true,
-    "strictNullChecks": true,
+    "strict": true,
     "sourceMap": true,
-    "lib": ["es2015", "webworker"]
+    "lib": ["es2020", "dom"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/__tests__/*"]

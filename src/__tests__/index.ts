@@ -1,18 +1,25 @@
+import { Observable, Observer } from 'rxjs';
 import { MockedWorker } from './mocks';
-import { WorkerSubject } from '../index';
-import { Subject } from 'rxjs';
+import { WorkerSubject, WorkerObservable } from '../index';
 
 describe('WorkerSubject', () => {
-  let worker;
-  let event;
+  let worker: MockedWorker;
 
-  describe('inheritance hierarchy', () => {
-    it('should be an instance of the MockedWorker', () => {
-      expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(WorkerSubject);
+  describe('inheritance', () => {
+    it('should be an instance of WorkerObservable', () => {
+      expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(WorkerObservable);
     });
 
-    it('should be an extension of the Subject', () => {
-      expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(Subject);
+    it('should be an instance of Observable', () => {
+      expect(new WorkerSubject(new MockedWorker())).toBeInstanceOf(Observable);
+    });
+  });
+
+  describe('interface', () => {
+    it('should implement the Observer interface', () => {
+      const typed: Observer<string> = new WorkerSubject<string, string>(new MockedWorker());
+
+      expect(typed).toBeDefined();
     });
   });
 
@@ -22,81 +29,160 @@ describe('WorkerSubject', () => {
       new WorkerSubject(worker);
     });
 
-    it('should set "onmessage" handler', () => {
+    it('should set onmessage handler', () => {
       expect(worker.onmessage).toBeInstanceOf(Function);
     });
 
-    it('should set "onerror" handler', () => {
+    it('should set onerror handler', () => {
       expect(worker.onerror).toBeInstanceOf(Function);
     });
   });
 
-  describe('#onmessage', () => {
-    beforeEach(() => {
-      event = { data: 'test data' };
+  describe('#error', () => {
+    it('should terminate the worker', () => {
       worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
 
-      spyOn( Subject.prototype, 'next' );
+      subj.error(new Error());
+
+      expect(worker.terminate).toHaveBeenCalled();
     });
 
-    it('should call "next" on parent class with "event.data" by default or if isRawResponse is set to false', () => {
-      new WorkerSubject(worker);
-      worker.onmessage(event);
-
-      expect(Subject.prototype.next).toBeCalledWith('test data');
-    });
-
-    it('should call "next" on the parent class with whole event object if isRawResponse is set to true', () => {
-      new WorkerSubject(worker, true);
-      worker.onmessage(event);
-
-      expect(Subject.prototype.next).toBeCalledWith(event);
-    });
-  });
-
-  describe('#onerror', () => {
-    it('should call "error" method with the same parameter if worker is throwing error', () => {
-      const error = new Error();
-
-      spyOn( Subject.prototype, 'error' );
+    it('should clear onmessage and onerror handlers', () => {
       worker = new MockedWorker();
-      new WorkerSubject(worker);
+      const subj = new WorkerSubject(worker);
 
-      worker.onerror(error);
+      subj.error(new Error());
 
-      expect(Subject.prototype.error).toBeCalledWith(error);
+      expect(worker.onmessage).toBeNull();
+      expect(worker.onerror).toBeNull();
+    });
+
+    it('should not throw', () => {
+      expect(() => new WorkerSubject(new MockedWorker()).error(new Error())).not.toThrow();
+    });
+
+    it('should propagate the error to subscribers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+      let receivedError: unknown;
+
+      subj.subscribe({ error: (err) => { receivedError = err; } });
+      const error = new Error('upstream error');
+
+      subj.error(error);
+
+      expect(receivedError).toBe(error);
     });
   });
 
   describe('#next', () => {
     it('should post a message to the worker', () => {
       worker = new MockedWorker();
-      const workerSubj = new WorkerSubject(worker);
+      const subj = new WorkerSubject<string, string>(worker);
 
-      workerSubj.next('test data');
+      subj.next('hello');
 
-      expect(worker.postMessage).toBeCalledWith('test data');
+      expect(worker.postMessage).toHaveBeenCalledWith('hello');
+    });
+
+    it('should not post a message after complete', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.complete();
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not post a message after error', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.error(new Error());
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not post a message after worker.onerror fires', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+
+      subj.subscribe({ error: () => {} });
+      worker.onerror!(new ErrorEvent('error'));
+      subj.next('hello');
+
+      expect(worker.postMessage).not.toHaveBeenCalled();
     });
   });
 
   describe('#complete', () => {
-    it('should call "complete" on the parent class', () => {
-      const workerSubj = new WorkerSubject(new MockedWorker());
+    it('should clear onmessage and onerror handlers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
 
-      spyOn( Subject.prototype, 'complete' );
+      subj.complete();
 
-      workerSubj.complete();
-
-      expect(Subject.prototype.complete).toBeCalledWith();
+      expect(worker.onmessage).toBeNull();
+      expect(worker.onerror).toBeNull();
     });
 
-    it('should call "terminate" the worker if terminate parameter is set tu true', () => {
+    it('should terminate the worker when terminate is true', () => {
       worker = new MockedWorker();
-      const workerSubj = new WorkerSubject(worker);
+      const subj = new WorkerSubject(worker);
 
-      workerSubj.complete(true);
+      subj.complete(true);
 
-      expect(worker.terminate).toBeCalledWith();
+      expect(worker.terminate).toHaveBeenCalled();
+    });
+  });
+
+  describe('#onerror', () => {
+    it('should propagate worker error to subscribers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject(worker);
+      let receivedError: unknown;
+
+      subj.subscribe({ error: (err) => { receivedError = err; } });
+      const error = new ErrorEvent('error');
+
+      worker.onerror!(error);
+
+      expect(receivedError).toBe(error);
+    });
+  });
+
+  describe('multiple subscribers', () => {
+    it('should deliver messages to all active subscribers', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+      const results1: string[] = [];
+      const results2: string[] = [];
+
+      subj.subscribe((v) => results1.push(v));
+      subj.subscribe((v) => results2.push(v));
+      worker.onmessage!({ data: 'hello' } as MessageEvent);
+
+      expect(results1).toEqual(['hello']);
+      expect(results2).toEqual(['hello']);
+    });
+  });
+
+  describe('subscription cleanup', () => {
+    it('should stop delivering messages after unsubscribe', () => {
+      worker = new MockedWorker();
+      const subj = new WorkerSubject<string, string>(worker);
+      const results: string[] = [];
+
+      const sub = subj.subscribe((v) => results.push(v));
+
+      worker.onmessage!({ data: 'before' } as MessageEvent);
+      sub.unsubscribe();
+      worker.onmessage!({ data: 'after' } as MessageEvent);
+
+      expect(results).toEqual(['before']);
     });
   });
 });

@@ -1,11 +1,15 @@
 {
   "preset": "ts-jest",
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
   "testEnvironment": "jsdom",
   "collectCoverage": true,
-  "modulePathIgnorePatterns": ["mocks.ts"],
-  "globals": {
-    "ts-jest": {
-      "tsConfig": "tsconfig.test.json"
-    }
+  "collectCoverageFrom": ["src/**/*.ts", "!src/**/__tests__/**"],
+  "testPathIgnorePatterns": ["/node_modules/", "mocks\\.ts"],
+  "transform": {
+    "^.+\\.tsx?$": ["ts-jest", {
+      "tsconfig": "tsconfig.test.json"
+    }]
   }
 }

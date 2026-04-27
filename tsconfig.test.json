@@ -1,8 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "lib": ["es2015", "dom"]
-  },
-  "include": ["src/__tests__"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
