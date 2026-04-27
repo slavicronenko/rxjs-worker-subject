@@ -4,6 +4,7 @@
 
 ### Changed
 - Build now publishes with npm provenance attestation, linking the package back to the source commit and CI run.
+- Publish workflow now creates a GitHub Release with auto-generated notes on every `v*` tag.
 
 ## [2.0.0] - 2026-04-26
 
