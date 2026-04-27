@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.1] - 2026-04-27
+
+### Changed
+- Build now publishes with npm provenance attestation, linking the package back to the source commit and CI run.
+
 ## [2.0.0] - 2026-04-26
 
 ### Breaking Changes
