@@ -1,5 +1,8 @@
 {
   "preset": "ts-jest",
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
   "testEnvironment": "jsdom",
   "collectCoverage": true,
   "collectCoverageFrom": ["src/**/*.ts", "!src/**/__tests__/**"],

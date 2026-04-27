@@ -1,6 +1,6 @@
 import { Observer } from 'rxjs';
-import { WorkerObservable, WorkerObservableOptions } from './worker-observable';
-import { WorkerObserver } from './worker-observer';
+import { WorkerObservable, WorkerObservableOptions } from './worker-observable.js';
+import { WorkerObserver } from './worker-observer.js';
 
 export class WorkerSubject<Input, Output> extends WorkerObservable<Output> implements Observer<Input> {
   private readonly observer: WorkerObserver<Input>;
